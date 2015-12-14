@@ -16,7 +16,7 @@ public class ClientControl {
 		BrickInfo[] found;
 		int i = 0;
 		do {
-			found = BrickFinder.find("b");
+			found = BrickFinder.find("a");
 		}
 		while (found.length == 0);
 			
@@ -25,12 +25,6 @@ public class ClientControl {
 			bekerbot = new Socket(found[0].getIPAddress(), 1994);
 			dataIn = new DataInputStream(bekerbot.getInputStream());
 			dataOut = new DataOutputStream(bekerbot.getOutputStream());
-			
-			String hallo = "hallo!";
-			
-			while (true) {
-				dataOut.writeInt(6);
-			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -50,5 +44,12 @@ public class ClientControl {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	public int waitForInt() {
+		int r = -1;
+		do {
+			r = readInt();
+		} while (r < 0);
+		return r;
 	}
 }

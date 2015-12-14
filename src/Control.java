@@ -8,10 +8,6 @@ import lejos.robotics.navigation.Pose;
 
 public class Control {
 	private boolean goalReached = false;
-//	private HeadControl hc;
-//	private ColorControl ccl;
-//	private ColorControl ccr;
-	private GyroControl gc;
 	
 	private int orientation = 0;
 	
@@ -26,8 +22,7 @@ public class Control {
 		LocalBTDevice n = new LocalBTDevice();
 		System.out.println(n.getFriendlyName());
 		if (n.getFriendlyName().equals("b")) {
-			gc = new GyroControl(SensorPort.S2);
-			BekerbotPoseControl bpc = new BekerbotPoseControl(new EV3LargeRegulatedMotor(MotorPort.A), new EV3LargeRegulatedMotor(MotorPort.B), new EV3LargeRegulatedMotor(MotorPort.D), gc);
+			BekerbotPoseControl bpc = new BekerbotPoseControl(new EV3LargeRegulatedMotor(MotorPort.A), new EV3LargeRegulatedMotor(MotorPort.B), new EV3LargeRegulatedMotor(MotorPort.D));
 		} else {
 			AfvuurbotPoseControl apc = new AfvuurbotPoseControl(new EV3LargeRegulatedMotor(MotorPort.C), new EV3LargeRegulatedMotor(MotorPort.D));
 		}
@@ -67,12 +62,6 @@ public class Control {
         		return true;
         	}
         });*/
-        
-        while(true)
-        {
-        	System.out.println(-gc.getAvgSample());
-        	Thread.yield();
-        }
         
         /*head.close();
         left.close();

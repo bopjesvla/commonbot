@@ -17,22 +17,6 @@ public class ServerControl {
 			Socket remoteClient = server.accept();
 			dataIn = new DataInputStream(remoteClient.getInputStream());
 			dataOut = new DataOutputStream(remoteClient.getOutputStream());
-			
-//			while(true) {
-//				// Read an integer indicating how many floats the client is transmitting.
-//				int numChars = dataIn.readInt();
-//				
-//				if (numChars < 1) continue;
-//				String input = "";
-//	
-//				// Read all floats.
-//				for(int i = 0; i < numChars; i++) {
-//					char c = dataIn.readChar();
-//					
-//					input += c;
-//				}
-//				System.out.println(input);
-//			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

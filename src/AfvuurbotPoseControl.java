@@ -1,5 +1,6 @@
 import java.util.concurrent.Callable;
 
+import lejos.hardware.port.SensorPort;
 import lejos.robotics.RegulatedMotor;
 import lejos.robotics.geometry.Point;
 import lejos.robotics.navigation.Pose;
@@ -7,12 +8,13 @@ import lejos.robotics.navigation.Pose;
 public class AfvuurbotPoseControl {
 	private RegulatedMotor c, d;
 	private GyroControl g;
+	USControl u;
 	int maxspeed;
 	int ltacho, rtacho;
 	float gcoffset = 0;
 	Pose pose = new Pose();
 	int orientation = 0;
-	ClientControl client;
+	ServerControl server;
 	float gyro;
 	
 	// MapControl map = new MapControl(this);
@@ -20,10 +22,10 @@ public class AfvuurbotPoseControl {
 	public AfvuurbotPoseControl(RegulatedMotor c, RegulatedMotor d) {
 		this.c = c;
 		this.d = d;
-		
+		this.u = new USControl(SensorPort.S4);
 		this.g = g;
 		
-		client = new ClientControl();
+		server = new ServerControl();
 		
 		maxspeed = Math.min((int) c.getMaxSpeed(), (int) d.getMaxSpeed());
 		
@@ -32,17 +34,40 @@ public class AfvuurbotPoseControl {
 		
 		ltacho = c.getTachoCount();
 		rtacho = d.getTachoCount();
-		int i = 5;
 		
-		while (i-->0) {
-			c.setSpeed(maxspeed*80/100);
-			c.rotateTo(8000);
-			c.setSpeed(maxspeed*80/100);
-			c.rotateTo(0);
-		}
-		
-		gyro = getGyro();
+		cycle();
 	}
+	
+	public void cycle() {
+		rotateToRandom();
+		int r = sendRandomRadius();
+		System.out.println(r);
+		float sample;
+		do {
+			sample = u.getSample(0);
+			System.out.println(sample);
+		} while (!(sample > 0.30 && sample < 1.20));
+		server.writeInt(5);
+	}
+	
+	public void rotateToRandom() {
+		int rotation = (int)(Math.random() * 360);
+		d.rotateTo(rotation);
+	}
+	
+	public int sendRandomRadius() {
+		int radius = (int)(Math.random() * 0) + 1;
+		server.writeInt(radius);
+		return radius;
+	}
+	
+	public void shoot() {
+		c.setSpeed(maxspeed*80/100);
+		c.rotateTo(8000);
+		c.setSpeed(maxspeed*80/100);
+		c.rotateTo(0);
+	}
+	
 	public float getGyro() {
 		float gyr = (-g.getAvgSample() - gcoffset);
 		

@@ -11,7 +11,7 @@ public class BekerbotPoseControl {
 	private RegulatedMotor l, r, m;
 	private GyroControl g;
 	private USControl u;
-	private ServerControl s;
+	private ClientControl client;
 	int maxspeed;
 	int ltacho, rtacho;
 	float gcoffset = 0;
@@ -24,7 +24,7 @@ public class BekerbotPoseControl {
 	SensorControl ccfront;
 	SensorControl ccball;
 
-	public BekerbotPoseControl(RegulatedMotor l, RegulatedMotor r, RegulatedMotor m, GyroControl g) {
+	public BekerbotPoseControl(RegulatedMotor l, RegulatedMotor r, RegulatedMotor m) {
 		this.l = l;
 		this.r = r;
 		this.m = m;
@@ -33,7 +33,7 @@ public class BekerbotPoseControl {
 		
 		System.out.println("uscontrol gevonden");
 		
-		this.s = new ServerControl();
+		client = new ClientControl();
 		
 		System.out.println("server gestart");
 
@@ -45,15 +45,18 @@ public class BekerbotPoseControl {
 		ccfront = new ColorControl(SensorPort.S3);
 		ccball = new RedControl(SensorPort.S1);
 
-		gyro = getGyro();
 		dp = new DifferentialPilot(5.6f, 13.75f, l, r);
 		int i = 0;
-		while (i++<3)
-			this.followCircleUntil(270+i*270,1);
+		this.followCircleUntilMessage(1);
 		
 		System.out.println("cirkel gevolgd");
 		
 		// this.emptyBucket();
+	}
+	
+	public void cycle() {
+		int radius = client.waitForInt();
+		followCircleUntilMessage(radius);
 	}
 
 	public float getGyro() {
@@ -121,6 +124,26 @@ public class BekerbotPoseControl {
 		// if colorID === 13 then emptybucket, rotate 180 degre
 	}
 	
+	public void followCircleUntilMessage(int r) {
+		boolean goingLeft = false;
+		float v = l.getMaxSpeed()/2;
+
+		dp.arcForward(-55);
+		float j;
+		
+		while (client.readInt() != 5) {
+			float sample = u.getSample(0);
+			System.out.println(sample);
+			if (sample < 0.9*(float)r/10 && !goingLeft) {
+				dp.arcForward(-55*r);
+				goingLeft=true;
+			} else if (!(sample < 0.9*(float)r/10) && goingLeft) {
+				dp.arcForward(55*r);
+				goingLeft=false;
+			}
+		}
+	}
+	
 	public void followCircleUntil(float toAngle, int r) {
 		toAngle = normAngle(toAngle);
 		boolean goingLeft = false;
@@ -129,7 +152,7 @@ public class BekerbotPoseControl {
 		dp.arcForward(-55);
 		float j;
 		
-		while ((j = Math.abs(normAngle(toAngle - getGyro()))) > 5 && s.readInt() != 5) {
+		while ((j = Math.abs(normAngle(toAngle - getGyro()))) > 5 && client.readInt() != 5) {
 			float sample = u.getSample(0);
 			System.out.println(sample);
 			if (sample < 0.9*(float)r/10 && !goingLeft) {
