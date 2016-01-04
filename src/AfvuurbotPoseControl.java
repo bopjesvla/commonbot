@@ -23,9 +23,17 @@ public class AfvuurbotPoseControl {
 		this.c = c;
 		this.d = d;
 		this.u = new USControl(SensorPort.S4);
+
+		maxspeed = Math.min((int) c.getMaxSpeed(), (int) d.getMaxSpeed());
+//		for (int i = 6500; i < 8500; i += 500) {
+//			System.out.println("SHOOTING PERCENTAGE: " + i);
+//			for (int j = 0; j < 10; j++) {
+//				System.out.println("distance: " + u.getAvgSample(200));
+//				shoot(80, i);
+//			}
+//		}
 		
 		server = new ServerControl();
-		maxspeed = Math.min((int) c.getMaxSpeed(), (int) d.getMaxSpeed());
 		cycle();
 	}
 	
@@ -37,16 +45,30 @@ public class AfvuurbotPoseControl {
 	public void cycle() {
 		rotateToRandom();
 		int r = sendRandomRadius(); //Always 1, non-dynamic solution
-		float sample;
+		float sample, oldsample;
 		server.writeInt(0);
+		
 		do {
-			sample = u.getAvgSample(200);
+			sample = u.getAvgSample(100);
 			System.out.println("distance: " + sample);
 		} while (!(sample > 0.30 && sample < 0.50));
+		
+		do {
+			oldsample = sample;
+			sample = u.getAvgSample(100);
+			System.out.println("smaller distance: " + sample);
+		} while (Math.abs(sample - oldsample) > .01);
+		
 		server.writeInt(6); //WRITE
-		shoot(80, 80);
+		sample = u.getAvgSample(200);
+		int shootingSpeed = getShootingSpeedFromDistance(sample);
+		shoot(80, shootingSpeed);
 		terminateSignal();
 		resetRotation();
+	}
+	
+	public int getShootingSpeedFromDistance(float distance) {
+		return (int)(6000.0 + ((distance - .25) * 2500));
 	}
 	
 	public void terminateSignal() {
@@ -81,7 +103,7 @@ public class AfvuurbotPoseControl {
 	 */
 	public void shoot(int speed, int distPercentage) {
 		c.setSpeed(maxspeed*speed/100);
-		c.rotateTo(distPercentage*100);
+		c.rotateTo(distPercentage);
 		c.setSpeed(maxspeed*speed/100);
 		c.rotateTo(0);
 	}
