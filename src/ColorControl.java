@@ -1,14 +1,10 @@
-
-
 import lejos.hardware.port.Port;
-import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
 
 public class ColorControl extends SensorControl {
 	protected EV3ColorSensor eyes;
 	
 	public ColorControl(Port port) {
-		super(port);
 		
 		eyes = new EV3ColorSensor(port);
 		distance = eyes.getMode("ColorID");

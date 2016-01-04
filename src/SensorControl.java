@@ -1,27 +1,34 @@
+import java.util.ArrayList;
+import java.util.List;
 
-
-import lejos.hardware.port.Port;
-import lejos.hardware.sensor.EV3ColorSensor;
-import lejos.hardware.sensor.SensorModes;
 import lejos.robotics.SampleProvider;
+
+/**
+ * An abstract control class for sensors. This class contains our implementations for getting a sample and an averaged sample.
+ * 
+ * @author Bob de Ruiter, Jochem Baaij, Sanna Dinh, Olaf Maltha, Jelle Hilbrands
+ *
+ */
 
 public abstract class SensorControl {
 	protected float[] sample;
-	private int sampleSize;
+	protected List<Float> sampleList = new ArrayList<Float>();
 	protected SampleProvider distance;
-	
-	public SensorControl(Port port) {
-		
-	}
+
 	public float getSample(int i) {
 		distance.fetchSample(sample, 0);
 		return sample[i];
 	}
-	public float getAvgSample() {
-		distance.fetchSample(sample, 0);
+	public float getAvgSample(int sampleSize) {
+		sampleList.clear();
+		for(int i = 0; i < sampleSize; i++) {
+			distance.fetchSample(sample, 0);
+			sampleList.add(sample[0]);
+		}
 		float sum = 0;
-		for (float d : sample) if (!Float.isInfinite(d)) sum += d; else sum += 1;
-		
-		return sum / (float)sample.length;
+		for (float d : sampleList) 
+			if (!Float.isInfinite(d)) sum += d; 
+			else sum += 2;
+		return sum / (float)sampleList.size();
 	}
 }
