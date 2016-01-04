@@ -57,8 +57,21 @@ public class BekerbotPoseControl {
 	public void cycle() {
 		int radius = client.waitForInt();
 		followCircleUntilMessage(radius);
+		
+		float color = -1;
+		do {
+			color = ccball.getSample(0);
+			System.out.println(color);
+		} while (color < 0.07);
+		sweepToLeftEye();
 	}
 
+	public void sweepToLeftEye() {
+		while (ccfront.getSample(0) != 13) {
+			
+		}
+	}
+	
 	public float getGyro() {
 		float gyr = g.getAvgSample() - gcoffset;
 

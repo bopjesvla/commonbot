@@ -42,12 +42,18 @@ public class AfvuurbotPoseControl {
 		rotateToRandom();
 		int r = sendRandomRadius();
 		System.out.println(r);
-		float sample;
+		float distance = 0;
+		int correctSamples = 0;
 		do {
-			sample = u.getSample(0);
-			System.out.println(sample);
-		} while (!(sample > 0.30 && sample < 1.20));
+			distance = u.getSample(0);
+			System.out.println(distance);
+			if (distance > 0.30 * r && distance < 1.20 * r)
+				correctSamples++;
+			else
+				correctSamples = 0;
+		} while (correctSamples < 30);
 		server.writeInt(5);
+		shoot(distance);
 	}
 	
 	public void rotateToRandom() {
@@ -61,11 +67,16 @@ public class AfvuurbotPoseControl {
 		return radius;
 	}
 	
-	public void shoot() {
+	public void shoot(float distance) {
 		c.setSpeed(maxspeed*80/100);
-		c.rotateTo(8000);
-		c.setSpeed(maxspeed*80/100);
-		c.rotateTo(0);
+		for (int i = 0; i < 10; i++) {
+			int r = (int) (4000.0 * distance * i) + 4000;
+			System.out.println(r);
+			
+			c.rotateTo(r);
+			c.setSpeed(maxspeed*80/100);
+			c.rotateTo(0);
+		}
 	}
 	
 	public float getGyro() {
