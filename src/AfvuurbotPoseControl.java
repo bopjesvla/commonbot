@@ -43,32 +43,52 @@ public class AfvuurbotPoseControl {
 	 * at that location and then shoots to that location. 
 	 */
 	public void cycle() {
-		rotateToRandom();
+		float sample;
+		
 		int r = sendRandomRadius(); //Always 1, non-dynamic solution
-		float sample, oldsample;
 		server.writeInt(0);
 		
 		do {
-			sample = u.getAvgSample(100);
-			System.out.println("distance: " + sample);
-		} while (!(sample > 0.30 && sample < 0.50));
+			rotateToRandom();
+			sleep(20000);
+			sample = u.getAvgSample(20);
+		} while (sample < 1.0);
 		
 		do {
-			oldsample = sample;
-			sample = u.getAvgSample(100);
-			System.out.println("smaller distance: " + sample);
-		} while (Math.abs(sample - oldsample) > .01);
+			sample = u.getAvgSample(20);
+			System.out.println("distance: " + sample);
+		} while (!(sample > 0.30 && sample < 0.60));
 		
 		server.writeInt(6); //WRITE
-		sample = u.getAvgSample(200);
+		rotateToBekerbot();
+		
+		sleep(2000);
+		
+		sample = u.getAvgSample(20000);
+		
+		System.out.println("final distance: " + sample);
+		
 		int shootingSpeed = getShootingSpeedFromDistance(sample);
 		shoot(80, shootingSpeed);
 		terminateSignal();
 		resetRotation();
 	}
 	
+	public void sleep(int t) {
+		try {
+			Thread.sleep(t);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void rotateToBekerbot() {
+		d.rotate(320);
+	}
+	
 	public int getShootingSpeedFromDistance(float distance) {
-		return (int)(6000.0 + ((distance - .25) * 2500));
+		return (int)(6150.0 + ((distance - .18) * 2700.0));
 	}
 	
 	public void terminateSignal() {

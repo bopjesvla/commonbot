@@ -44,6 +44,7 @@ public class BekerbotPoseControl {
 		ccball = new RedControl(SensorPort.S1);
 
 		dp = new DifferentialPilot(5.6f, 13.75f, l, r);
+		dp.setLinearSpeed(10);
 		cycle();
 	}
 	
@@ -56,6 +57,10 @@ public class BekerbotPoseControl {
 	public void cycle() {
 		int radius = client.waitForInt();
 		followCircleUntilMessage(radius);
+		float sample;
+		do {
+			sample = ccball.getAvgSample(20);
+		} while (sample < 0.07);
 		terminateSignal();
 	}
 
@@ -105,7 +110,7 @@ public class BekerbotPoseControl {
 	
 	public void goToA() {
 		dp.rotate(90);
-
+		
 		// if colorID === 13 then emptybucket, rotate 180 degre
 	}
 	
@@ -114,19 +119,23 @@ public class BekerbotPoseControl {
 	 * @param radius The radius of the circle to be followed.
 	 */
 	public void followCircleUntilMessage(int radius) {
+		int arc = 55;
 		boolean goingLeft = false;
 		int readInt = 0; 
-		dp.arcForward(-55);
+		dp.arcForward(-arc);
 		while (readInt != 6) {
 			System.out.println("In de while loop");
 			float sample = u.getAvgSample(5);
 			//System.out.println(sample);
 			if (sample < 0.9*(float)radius && !goingLeft) {
-				dp.arcForward(-55*radius);
+				if (sample > 0.4 && sample < 0.6)
+					arc = (int)(sample * 100);
+				
+				dp.arcForward(-arc*radius);
 				System.out.println("left " + 0.9*(float)radius);
 				goingLeft=true;
 			} else if (!(sample < 0.9*(float)radius) && goingLeft) {
-				dp.arcForward(55*radius);
+				dp.arcForward(arc*radius);
 				System.out.println("right " + 0.9*(float)radius);
 				goingLeft=false;
 			}
