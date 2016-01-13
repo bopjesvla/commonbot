@@ -23,9 +23,19 @@ public class AfvuurbotPoseControl {
 		this.c = c;
 		this.d = d;
 		this.u = new USControl(SensorPort.S4);
+		maxspeed = Math.min((int) c.getMaxSpeed(), (int) d.getMaxSpeed());
+		
+		for (int j = 0; j < 10; j++) {
+			shoot(80, 60);
+			System.out.println("distance: " + u.getAvgSample(200));
+			for (int i = 0; i < 10; i++) {
+				shoot(80, 60);
+				System.out.println("distance: " + u.getAvgSample(200));
+			}
+		}
+		
 		
 		server = new ServerControl();
-		maxspeed = Math.min((int) c.getMaxSpeed(), (int) d.getMaxSpeed());
 		cycle();
 	}
 	
