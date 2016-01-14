@@ -24,16 +24,13 @@ public class AfvuurbotPoseControl {
 		this.d = d;
 		this.u = new USControl(SensorPort.S4);
 		maxspeed = Math.min((int) c.getMaxSpeed(), (int) d.getMaxSpeed());
-		
-		for (int j = 0; j < 10; j++) {
-			shoot(80, 60);
-			System.out.println("distance: " + u.getAvgSample(200));
-			for (int i = 0; i < 10; i++) {
-				shoot(80, 60);
-				System.out.println("distance: " + u.getAvgSample(200));
-			}
-		}
-		
+//		for (int i = 6500; i < 8500; i += 500) {
+//			System.out.println("SHOOTING PERCENTAGE: " + i);
+//			for (int j = 0; j < 10; j++) {
+//				System.out.println("distance: " + u.getAvgSample(200));
+//				shoot(80, i);
+//			}
+//		}
 		
 		server = new ServerControl();
 		cycle();
@@ -45,18 +42,70 @@ public class AfvuurbotPoseControl {
 	 * at that location and then shoots to that location. 
 	 */
 	public void cycle() {
-		rotateToRandom();
-		int r = sendRandomRadius(); //Always 1, non-dynamic solution
 		float sample;
-		server.writeInt(0);
+		
+		int r = sendRandomRadius(); //Always 1, non-dynamic solution
+		
+//		do {
+//			rotateToRandom();
+//			sample = u.getAvgSample(20);
+//		} while (sample < 1.0);
+		
+		server.writeInt('s'); // start
+		
 		do {
-			sample = u.getAvgSample(200);
+			sample = u.getAvgSample(20);
 			System.out.println("distance: " + sample);
-		} while (!(sample > 0.30 && sample < 0.50));
-		server.writeInt(6); //WRITE
-		shoot(80, 80);
+		} while (!(sample > 0.30 && sample < 0.60));
+		
+		server.writeInt('x'); // stop bekerbot
+		rotateToBekerbot();
+		
+		sleep(2000);
+		
+		sample = u.getAvgSample(20000);
+		
+		System.out.println("final distance: " + sample);
+		
+		int shootingSpeed = getShootingSpeedFromDistance(sample);
+		shoot(80, shootingSpeed);
+		monitorSweeping();
 		terminateSignal();
 		resetRotation();
+	}
+	
+	public void monitorSweeping() {
+		boolean seen = true;
+		while (server.readInt() != 'e') {
+//			if (seen && !(u.getAvgSample(20) < 0.60)) {
+//				seen = false;
+//				server.writeInt('c'); // change direction
+//			}
+//			else if (u.getAvgSample(20) < 0.30) {
+//				seen = true;
+//				server.writeInt('l'); // change direction, change sweep
+//			}
+//			else if (u.getAvgSample(20) < 0.60) {
+//				seen = true;
+//			}
+		}
+	}
+	
+	public void sleep(int t) {
+		try {
+			Thread.sleep(t);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void rotateToBekerbot() {
+		d.rotate(320);
+	}
+	
+	public int getShootingSpeedFromDistance(float distance) {
+		return (int)(6150.0 + ((distance - .18) * 2700.0));
 	}
 	
 	public void terminateSignal() {
@@ -91,7 +140,7 @@ public class AfvuurbotPoseControl {
 	 */
 	public void shoot(int speed, int distPercentage) {
 		c.setSpeed(maxspeed*speed/100);
-		c.rotateTo(distPercentage*100);
+		c.rotateTo(distPercentage);
 		c.setSpeed(maxspeed*speed/100);
 		c.rotateTo(0);
 	}

@@ -44,6 +44,7 @@ public class BekerbotPoseControl {
 		ccball = new RedControl(SensorPort.S1);
 
 		dp = new DifferentialPilot(5.6f, 13.75f, l, r);
+		dp.setLinearSpeed(10);
 		cycle();
 	}
 	
@@ -55,21 +56,49 @@ public class BekerbotPoseControl {
 	 */
 	public void cycle() {
 		int radius = client.waitForInt();
-		followCircleUntilMessage(radius);
 		
-		float color = -1;
+		client.waitForInt(); // start
+		
+		followCircleUntil(radius, false);
+		float sample;
+		
 		do {
-			color = ccball.getSample(0);
-			System.out.println(color);
-		} while (color < 0.07);
-		sweepToLeftEye();
+			sample = ccball.getAvgSample(20);
+		} while (sample < 0.07);
+		
+		followCircleUntil(radius, true);
+		rotateToA();
+		client.writeInt('e'); // emptying bucket
+		emptyBucket();
 		terminateSignal();
 	}
 
 	public void sweepToLeftEye() {
-		while (ccfront.getSample(0) != 13) {
-			
+		boolean goingLeft = true;
+		dp.arcForward(-55);
+		int msg = -1;
+		while (msg != 'l') { // l = look around for red eye
+			msg = client.readInt();
+			if (msg == 'c') { // change sweeping direction
+				goingLeft = !goingLeft;
+				if (goingLeft) {
+					dp.arcBackward(-55);
+				}
+				else {
+					dp.arcBackward(55);
+				}
+			}
 		}
+		goingLeft = !goingLeft;
+		dp.arc(goingLeft ? -10 : 10, -120, true);
+		
+		while (ccfront.getSample(0) != 13) {
+			if (!dp.isMoving()) {
+				goingLeft = !goingLeft;
+				dp.arc(goingLeft ? -10 : 10, -120, true);
+			}
+		}
+		dp.stop();
 	}
 
 	/**
@@ -116,9 +145,9 @@ public class BekerbotPoseControl {
 		m.rotateTo(0);
 	}
 	
-	public void goToA() {
+	public void rotateToA() {
 		dp.rotate(90);
-
+		
 		// if colorID === 13 then emptybucket, rotate 180 degre
 	}
 	
@@ -126,28 +155,66 @@ public class BekerbotPoseControl {
 	 * Rides a circle with radius r until a message is received from the afvuurbot.
 	 * @param radius The radius of the circle to be followed.
 	 */
-	public void followCircleUntilMessage(int radius) {
+	public void followCircleUntil(int radius, boolean circleToBot) {
+		int arc = 55;
+		boolean goingLeft = false;
+		int msg = 0; 
+		dp.arcForward(-arc);
+		while (circleToBot ? ccfront.getSample(0) != 13 : msg != 'x') { // stop signal
+			float sample = u.getAvgSample(5);
+			
+			if (!(sample < 3)) { // handle infinity values
+				sample = 3;
+			}
+			
+			int newArc;
+			
+			if (sample < 0.9) {
+				int factor = circleToBot && sample > 0.18 ? 110 : 125;
+				newArc = -(int)(sample * factor);
+			}
+			else
+				newArc = Math.abs(arc);
+			
+			if (Math.abs(newArc - arc) > 20) { // only update arc after a big change in distance
+				arc = newArc;
+				dp.arcForward(arc*radius);
+			}
+			
+			System.out.println("Sample: " + sample);
+			msg = client.readInt(); //READ
+			// System.out.println(msg);
+		}
+		dp.stop();
+	}
+	
+	public void followCircleUntilRedEye(int radius) {
+		int arc = 55;
 		boolean goingLeft = false;
 		int readInt = 0; 
-		dp.arcForward(-55);
-		while (readInt != 6) {
-			System.out.println("In de while loop");
+		dp.arcForward(-arc);
+		while (ccfront.getSample(0) != 13) {
 			float sample = u.getAvgSample(5);
 			//System.out.println(sample);
 			if (sample < 0.9*(float)radius && !goingLeft) {
-				dp.arcForward(-55*radius);
+				if (sample < 0.2)
+					arc = (int)(sample * 100);
+				else if (sample < 0.6)
+					arc = (int)(sample * 95);
+				
+				dp.arcForward(-arc*radius);
 				System.out.println("left " + 0.9*(float)radius);
 				goingLeft=true;
 			} else if (!(sample < 0.9*(float)radius) && goingLeft) {
-				dp.arcForward(55*radius);
+				dp.arcForward(arc*radius);
 				System.out.println("right " + 0.9*(float)radius);
 				goingLeft=false;
 			}
-			System.out.println("Attempting to read");
+			System.out.println("S");
 			readInt = client.readInt(); //READ
 			System.out.println(readInt);
 		}
-		stop();
+		dp.stop();
 	}
 	
 	private void terminateSignal() {
