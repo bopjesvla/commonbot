@@ -15,15 +15,15 @@ public abstract class SensorControl {
 	protected List<Float> sampleList = new ArrayList<Float>();
 	protected SampleProvider distance;
 
-	public float getSample(int i) {
+	public float getSample() {
 		distance.fetchSample(sample, 0);
-		return sample[i];
+		return sample[0];
 	}
 	public float getAvgSample(int sampleSize) {
 		sampleList.clear();
 		for(int i = 0; i < sampleSize; i++) {
-			distance.fetchSample(sample, 0);
-			sampleList.add(sample[0]);
+			float sample = getSample();
+			sampleList.add(sample);
 		}
 		float sum = 0;
 		for (float d : sampleList) 

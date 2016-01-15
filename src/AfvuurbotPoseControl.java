@@ -112,6 +112,7 @@ public class AfvuurbotPoseControl {
 		server.writeInt(42);
 		while(server.readInt() != 37) {
 		}
+		System.out.println("terminated");
 	}
 	
 	/**

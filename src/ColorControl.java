@@ -12,6 +12,8 @@ public class ColorControl extends SensorControl {
 	}
 }
 
+
+
 // ccball
 //
 // colorid: 6/7

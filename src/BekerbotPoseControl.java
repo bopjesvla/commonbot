@@ -41,10 +41,10 @@ public class BekerbotPoseControl {
 		maxspeed = Math.min((int) l.getMaxSpeed(), (int) r.getMaxSpeed());
 		
 		ccfront = new ColorControl(SensorPort.S3);
-		ccball = new RedControl(SensorPort.S1);
+		ccball = new GreyControl(SensorPort.S1);
 
 		dp = new DifferentialPilot(5.6f, 13.75f, l, r);
-		dp.setLinearSpeed(10);
+		dp.setLinearSpeed(5);
 		cycle();
 	}
 	
@@ -92,7 +92,7 @@ public class BekerbotPoseControl {
 		goingLeft = !goingLeft;
 		dp.arc(goingLeft ? -10 : 10, -120, true);
 		
-		while (ccfront.getSample(0) != 13) {
+		while (ccfront.getSample() != 13) {
 			if (!dp.isMoving()) {
 				goingLeft = !goingLeft;
 				dp.arc(goingLeft ? -10 : 10, -120, true);
@@ -158,10 +158,14 @@ public class BekerbotPoseControl {
 	public void followCircleUntil(int radius, boolean circleToBot) {
 		int arc = 55;
 		boolean goingLeft = false;
-		int msg = 0; 
+		int msg;
+		float colorSample = 0;
 		dp.arcForward(-arc);
-		while (circleToBot ? ccfront.getSample(0) != 13 : msg != 'x') { // stop signal
+		do { // stop signal
 			float sample = u.getAvgSample(5);
+			
+			if (circleToBot)
+				colorSample = ccfront.getAvgSample(2);
 			
 			if (!(sample < 3)) { // handle infinity values
 				sample = 3;
@@ -169,8 +173,8 @@ public class BekerbotPoseControl {
 			
 			int newArc;
 			
-			if (sample < 0.9) {
-				int factor = circleToBot && sample > 0.18 ? 110 : 125;
+			if (circleToBot ? colorSample > -1 : sample < 0.9) {
+				int factor = circleToBot && sample > 0.18 ? 90 : 105;
 				newArc = -(int)(sample * factor);
 			}
 			else
@@ -181,10 +185,10 @@ public class BekerbotPoseControl {
 				dp.arcForward(arc*radius);
 			}
 			
-			System.out.println("Sample: " + sample);
+			System.out.println("Sample: " + colorSample);
 			msg = client.readInt(); //READ
 			// System.out.println(msg);
-		}
+		} while (circleToBot ? colorSample != 13: msg != 'x');
 		dp.stop();
 	}
 	
@@ -193,7 +197,7 @@ public class BekerbotPoseControl {
 		boolean goingLeft = false;
 		int readInt = 0; 
 		dp.arcForward(-arc);
-		while (ccfront.getSample(0) != 13) {
+		while (ccfront.getSample() != 13) {
 			float sample = u.getAvgSample(5);
 			//System.out.println(sample);
 			if (sample < 0.9*(float)radius && !goingLeft) {
