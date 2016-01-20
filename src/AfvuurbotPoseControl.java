@@ -52,23 +52,25 @@ public class AfvuurbotPoseControl {
 //		} while (sample < 1.0);
 		
 		server.writeInt('s'); // start
-		
+		int sleepTime = 500;
 		do {
-			sample = u.getAvgSample(20);
+			sleep(sleepTime);
+			sample = u.getAvgSample(sleepTime/5);
 			System.out.println("distance: " + sample);
-		} while (!(sample > 0.30 && sample < 0.60));
+		} while (!(sample > 0.25 && sample < 0.65));
 		
 		server.writeInt('x'); // stop bekerbot
+		sleepTime*=3;
+		sleep(sleepTime);
 		rotateToBekerbot();
+		sample = u.getAvgSample(sleepTime/5);
 		
-		sleep(2000);
 		
-		sample = u.getAvgSample(20000);
-		
-		System.out.println("final distance: " + sample);
 		
 		int shootingSpeed = getShootingSpeedFromDistance(sample);
-		shoot(80, shootingSpeed);
+		System.out.println("final distance: " + sample);
+		System.out.println("SS: "+ shootingSpeed);
+		shoot(75, shootingSpeed);
 		monitorSweeping();
 		terminateSignal();
 		resetRotation();
@@ -101,11 +103,11 @@ public class AfvuurbotPoseControl {
 	}
 	
 	public void rotateToBekerbot() {
-		d.rotate(320);
+		d.rotate(310);
 	}
 	
 	public int getShootingSpeedFromDistance(float distance) {
-		return (int)(6150.0 + ((distance - .18) * 2700.0));
+		return Math.min((int)(6200.0 + ((distance - .17) * 2700.0)),8200) ;
 	}
 	
 	public void terminateSignal() {

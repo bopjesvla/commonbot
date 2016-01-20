@@ -26,6 +26,7 @@ public class BekerbotPoseControl {
 	 * @param r Lego EV3 RegulatedMotor right wheel
 	 * @param m Lego Ev3 RegulatedMotor arm
 	 */
+	@SuppressWarnings("deprecation")
 	public BekerbotPoseControl(RegulatedMotor l, RegulatedMotor r, RegulatedMotor m) {
 		this.l = l;
 		this.r = r;
@@ -44,7 +45,7 @@ public class BekerbotPoseControl {
 		ccball = new GreyControl(SensorPort.S1);
 
 		dp = new DifferentialPilot(5.6f, 13.75f, l, r);
-		dp.setLinearSpeed(5);
+		dp.setLinearSpeed(7);
 		cycle();
 	}
 	
@@ -146,7 +147,7 @@ public class BekerbotPoseControl {
 	}
 	
 	public void rotateToA() {
-		dp.rotate(90);
+		dp.arc(9.5, 40);
 		
 		// if colorID === 13 then emptybucket, rotate 180 degre
 	}
@@ -167,14 +168,14 @@ public class BekerbotPoseControl {
 			if (circleToBot)
 				colorSample = ccfront.getAvgSample(2);
 			
-			if (!(sample < 3)) { // handle infinity values
-				sample = 3;
+			if (!(sample < 2)) { // handle infinity values
+				sample = 2;
 			}
 			
 			int newArc;
 			
-			if (circleToBot ? colorSample > -1 : sample < 0.9) {
-				int factor = circleToBot && sample > 0.18 ? 90 : 105;
+			if (circleToBot ?( sample < 0.9 && colorSample==-1) : sample<1.1) {
+				int factor = circleToBot && (sample > 0.192) ? 90 : 120;
 				newArc = -(int)(sample * factor);
 			}
 			else
